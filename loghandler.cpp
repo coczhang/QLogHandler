@@ -1,6 +1,6 @@
 #include "loghandler.h"
 
-// 初始化 static 变量
+//初始化 static 变量
 QMutex LogHandler::m_fileMutex;
 QMutex LogHandler::m_LogMutex;
 QTextStream* LogHandler::m_pLogOut = nullptr;
@@ -61,7 +61,7 @@ void LogHandler::OnRenameFile()
     QMutexLocker locker(&LogHandler::m_fileMutex);
     CreateLogFile();  //创建日志文件
     CheckLogFile();   //检测当前日志文件大小
-    DeleteLogFile();  //自动删除30天前的日志
+    DeleteLogFile();  //自动删除7天前的日志
 }
 
 void LogHandler::OnFlushFile()
@@ -86,14 +86,14 @@ LogHandler* LogHandler::GetInstance()
     return m_pLogHandler;
 }
 
-// 打开日志文件 log.txt，如果不是当天创建的，则使用创建日期把其重命名为 yyyy-MM-dd.log，并重新创建一个 log.txt
+//打开日志文件 log.txt，如果不是当天创建的，则使用创建日期把其重命名为 yyyy-MM-dd.log，并重新创建一个 log.txt
 void LogHandler::CreateLogFile()
 {
     if (!m_logDir.exists(m_logPath)) {
         m_logDir.mkpath(m_logPath);
     }
 
-    //程序每次启动时 logFile 为 nullptr
+    //程序每次启动时 logFile 为 nullptr，每次都需要初始化
     if (nullptr == m_pLogFile) {
         m_pLogFile = new QFile(m_logName);
         m_pLogOut  = (m_pLogFile->open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append)) ?  new QTextStream(m_pLogFile) : nullptr;
@@ -115,7 +115,7 @@ void LogHandler::CreateLogFile()
 
         QString newLogName = m_logPath + "/" + m_fileCreatedDate.toString("yyyy-MM-dd.log");
         QFile::copy(m_logName, newLogName); //日志文件重命名
-        QFile::remove(m_logName); // 删除重新创建，改变创建时间
+        QFile::remove(m_logName); //删除重新创建，改变创建时间
 
         // 重新创建 log.txt
         m_pLogFile = new QFile(m_logName);
@@ -127,7 +127,7 @@ void LogHandler::CreateLogFile()
     }
 }
 
-// 检测当前日志文件大小
+//检测当前日志文件大小
 void LogHandler::CheckLogFile()
 {
     // 如果 protocal.log 文件大小超过10M，重新创建一个日志文件，原文件存档为yyyy-MM-dd_hhmmss.log
@@ -138,8 +138,8 @@ void LogHandler::CheckLogFile()
         delete m_pLogOut;
 
         QString newLogName =m_logPath + "/" + m_fileCreatedDate.toString("yyyy-MM-dd.log");
-        QFile::copy(m_logName, newLogName);
-        QFile::remove(m_logName); // 删除重新创建，改变创建时间
+        QFile::copy(m_logName, newLogName); //日志文件重命名
+        QFile::remove(m_logName); //删除重新创建，改变创建时间
 
         m_pLogFile = new QFile(m_logName);
         m_pLogOut  = (m_pLogFile->open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) ?  new QTextStream(m_pLogFile) : NULL;
@@ -150,7 +150,7 @@ void LogHandler::CheckLogFile()
     }
 }
 
-// 自动删除7天前的日志
+//自动删除7天前的日志
 void LogHandler::DeleteLogFile()
 {
     QDateTime now = QDateTime::currentDateTime();
@@ -171,7 +171,7 @@ void LogHandler::DeleteLogFile()
     }
 }
 
-// 消息处理函数
+//消息处理函数
 void LogHandler::MsgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QMutexLocker locker(&LogHandler::m_fileMutex);
@@ -198,7 +198,7 @@ void LogHandler::MsgHandler(QtMsgType type, const QMessageLogContext &context, c
         return;
     }
 
-    // 输出到日志文件, 格式: 时间 - [Level] (文件名:行数, 函数): 消息
+    //输出到日志文件, 格式: 时间 - [Level] (文件名:行数, 函数): 消息
     QString fileName = context.file;
     int index = fileName.lastIndexOf(QDir::separator());
     fileName = fileName.mid(index + 1);
@@ -208,15 +208,15 @@ void LogHandler::MsgHandler(QtMsgType type, const QMessageLogContext &context, c
                                     .arg(fileName).arg(context.line).arg(context.function).arg(msg);
 }
 
-// 给Qt安装消息处理函数
+//给Qt安装消息处理函数
 void LogHandler::InstallMessageHandler()
 {
     QMutexLocker locker(&LogHandler::m_fileMutex);
 
-    qInstallMessageHandler(LogHandler::MsgHandler); // 给 Qt 安装自定义消息处理函数
+    qInstallMessageHandler(LogHandler::MsgHandler); //给Qt安装自定义消息处理函数
 }
 
-// 取消安装消息处理函数并释放资源
+//取消安装消息处理函数并释放资源
 void LogHandler::UninstallMessageHandler()
 {
     QMutexLocker locker(&LogHandler::m_fileMutex);

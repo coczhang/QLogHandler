@@ -2,7 +2,7 @@
 
 //初始化 static 变量
 QMutex LogHandler::m_fileMutex;
-QMutex LogHandler::m_LogMutex;
+QMutex LogHandler::m_logMutex;
 QTextStream* LogHandler::m_pLogOut = nullptr;
 LogHandler* LogHandler::m_pLogHandler = nullptr;
 
@@ -76,11 +76,11 @@ void LogHandler::OnFlushFile()
 LogHandler* LogHandler::GetInstance()
 {
     if (nullptr == m_pLogHandler) {
-        m_LogMutex.lock();
+        m_logMutex.lock();
         if (nullptr == m_pLogHandler) {
             m_pLogHandler = new LogHandler();
         }
-        m_LogMutex.unlock();
+        m_logMutex.unlock();
     }
 
     return m_pLogHandler;

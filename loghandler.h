@@ -2,7 +2,6 @@
 #define LOGHANDLER_H
 
 #include <QObject>
-#include <QDir>
 #include <QTimer>
 #include <QDate>
 #include <QDebug>
@@ -51,7 +50,7 @@ private:
 
     static QTextStream *m_pLogOut;    //输出日志的 QTextStream，使用静态对象就是为了减少函数调用的开销
     static QMutex m_fileMutex;        //文件写入同步使用的mutex
-    static QMutex m_LogMutex;
+    static QMutex m_logMutex;
     static LogHandler *m_pLogHandler;
 
 public:
